@@ -1,0 +1,40 @@
+MIT License
+
+Copyright (c) 2026 tarekedOz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Third-party components and attribution
+
+This project is a port of, and incorporates material from, the following
+open-source projects. Their respective licenses apply to those portions:
+
+- Chatterbox TTS — Resemble AI (MIT License).
+  Model architecture, conversion targets, and the bundled reference voice
+  clips in `voices/` derive from this project.
+  https://github.com/resemble-ai/chatterbox
+
+- ggml — The ggml authors / ggml-org (MIT License).
+  Included as a git submodule under `chatterbox-cpp/third_party/ggml`.
+  https://github.com/ggml-org/ggml
+
+- The HTTP API contract mirrors Chatterbox-TTS-Server (devnen).
+  https://github.com/devnen/Chatterbox-TTS-Server

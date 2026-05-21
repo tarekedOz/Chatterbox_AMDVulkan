@@ -1,0 +1,30 @@
+{
+  "T_mel": 16,
+  "d_mel": 80,
+  "d_in": 320,
+  "d_time": 1024,
+  "n_stages": 13,
+  "stages": [
+    "after_t_emb",
+    "after_r_emb",
+    "after_time_mixer",
+    "after_pack",
+    "after_down0_resnet",
+    "after_down0_transformer",
+    "after_down0_downsample",
+    "after_mid0",
+    "after_mid11",
+    "after_up0_transformer",
+    "after_up0_upsample",
+    "after_final_block",
+    "after_final_proj"
+  ],
+  "n_timesteps": 2,
+  "t_probe": 0.5,
+  "r_probe": 1.0,
+  "dxdt_min": -9.949234962463379,
+  "dxdt_max": 2.208817720413208,
+  "out_min": -11.277521133422852,
+  "out_max": -0.1818065643310547,
+  "out_mean": -5.95701265335083
+}

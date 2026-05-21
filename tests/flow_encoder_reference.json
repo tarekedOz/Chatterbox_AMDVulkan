@@ -1,0 +1,27 @@
+{
+  "T_in": 16,
+  "T_out": 32,
+  "d_in": 512,
+  "d_out": 80,
+  "vocab": 6561,
+  "n_stages": 11,
+  "stages": [
+    "after_input_embedding",
+    "after_embed",
+    "after_prelookahead",
+    "after_enc_block0",
+    "after_enc_block5",
+    "after_uplayer",
+    "after_upembed",
+    "after_upenc_block0",
+    "after_upenc_block3",
+    "after_afternorm",
+    "after_encoderproj"
+  ],
+  "out_min": -1.301114559173584,
+  "out_max": 1.4272152185440063,
+  "out_mean": 0.021703753620386124,
+  "spk_aff_min": -0.24544331431388855,
+  "spk_aff_max": 0.17216145992279053,
+  "spk_aff_mean": -0.010633332654833794
+}

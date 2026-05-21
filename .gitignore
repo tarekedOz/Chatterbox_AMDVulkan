@@ -1,93 +1,69 @@
-# ---- Claude Code / local tooling ----
-.claude/
-
-# ---- Secrets / environment ----
-.env
-.env.*
-*.env
-*.pem
-*.key
-*.crt
-*.p12
-secrets.*
-credentials.*
-
-# ---- Python ----
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual environments
 .venv/
 venv/
 env/
-ENV/
-env.bak/
-venv.bak/
-
-# Test / coverage / type-check caches
+*.egg-info/
 .pytest_cache/
 .mypy_cache/
-.ruff_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-.hypothesis/
 
-# Jupyter
-.ipynb_checkpoints/
+# C / C++ build outputs
+build/
+build-*/
+cmake-build-*/
+chatterbox-cpp/build/
+chatterbox-cpp/build-*/
+chatterbox-cpp/cmake-build-*/
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dll
+*.dylib
+*.exe
+*.pdb
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
 
-# ---- ML / model artifacts (large binaries) ----
+# Rust
+target/
+
+# Models & large artifacts (not committed; fetched or built)
+*.gguf
+*.safetensors
 *.ckpt
 *.pt
 *.pth
-*.safetensors
-*.bin
 *.onnx
-*.gguf
 checkpoints/
 models/
-weights/
-outputs/
-*.wav
-*.mp3
-*.flac
+voices.bin
 
-# ---- IDE / editor ----
+# IDE / editor
 .vscode/
 .idea/
 *.swp
-*.swo
-*~
+.cache/
 
-# ---- OS cruft ----
+# OS
 .DS_Store
 Thumbs.db
-desktop.ini
+Desktop.ini
 
-# ---- Logs / temp ----
-*.log
-logs/
-tmp/
-temp/
+# Claude per-user settings (not shared)
+.claude/
+
+# Build artifacts (cmake/ninja under chatterbox-cpp/)
+chatterbox-cpp/build/
+chatterbox-cpp/build_vk/
+chatterbox-cpp/build_*/
+
+# Internal-only docs — not for public release (contains build rationale /
+# cross-project references). A curated public docs set will be added later.
+docs/
+chatterbox-vulkan-design.md

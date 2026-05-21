@@ -1,0 +1,3 @@
+[submodule "chatterbox-cpp/third_party/ggml"]
+	path = chatterbox-cpp/third_party/ggml
+	url = https://github.com/ggml-org/ggml.git

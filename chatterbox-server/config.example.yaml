@@ -1,0 +1,15 @@
+# Example chatterbox-server config. Copy to config.yaml (auto-loaded
+# from the working dir) or pass --config <path> / set CHATTERBOX_CONFIG.
+#
+# Precedence: CLI flag > environment variable > this file > built-in default.
+# Every field is optional here; the model/voices paths must be resolvable
+# from somewhere (flag, env, or this file).
+
+t3_gguf: models/chatterbox-turbo-t3-fp16.gguf
+ve_gguf: models/chatterbox-turbo-ve-fp16.gguf
+s3gen_gguf: models/chatterbox-turbo-s3gen-fp16.gguf
+voices_gguf: tests/voices/voices.gguf
+
+addr: 127.0.0.1:8087        # bind address
+max_samples: 720000         # output cap, samples @ 24 kHz (30 s)
+max_chunk_chars: 300        # long-text chunk size (sentence-bounded)

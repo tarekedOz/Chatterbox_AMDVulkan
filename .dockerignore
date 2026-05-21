@@ -1,0 +1,23 @@
+# Don't ship the host build trees, test outputs, or large fixtures
+# we don't actually need at runtime.
+chatterbox-cpp/build/
+chatterbox-cpp/build_*/
+chatterbox-server/target/
+.venv/
+__pycache__/
+*.pyc
+.git/
+.github/
+docs/
+scripts/__pycache__/
+# Source reference WAVs for the voice library — only the packed
+# voices.gguf is needed in the image, not the ~20 MB of source clips.
+voices/
+# Reference test binaries (regenerable from the python scripts)
+tests/*.bin
+tests/*.json
+# But DO ship voices.gguf (referenced by the Dockerfile) and the
+# reference voice WAVs in tests/voices/ (small and useful for
+# in-container smoke testing).
+!tests/voices/voices.gguf
+!tests/voices/*.wav

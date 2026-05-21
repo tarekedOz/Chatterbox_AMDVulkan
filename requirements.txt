@@ -1,0 +1,19 @@
+# Phase 1 — tokenizer parity test only.
+# Deliberately minimal: torch is NOT needed for tokenizer-in-isolation
+# work, and we don't want to install it yet (large, and we have to be
+# disk-conscious per docs/session-state.md).
+#
+# When we move to the model-conversion script (convert_chatterbox_to_gguf.py)
+# we will add torch + safetensors + the rest. Defer until then.
+
+transformers>=4.40
+tokenizers>=0.15
+huggingface_hub>=0.20
+
+# GGUF writer for the conversion script. Pure-python; no torch dep.
+gguf>=0.10
+
+# safetensors is pulled in transitively by transformers, but pin it
+# explicitly since the converter loads via safetensors.numpy.load_file.
+safetensors>=0.4
+numpy>=1.26

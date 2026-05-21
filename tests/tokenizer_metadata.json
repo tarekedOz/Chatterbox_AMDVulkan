@@ -1,0 +1,31 @@
+{
+  "source_repo": "ResembleAI/chatterbox-turbo",
+  "tokenizer_file_sha256": {
+    "vocab.json": "f6bd25a65e4e63ca31360e9fb11c7e4f9a391a78385d640acd814092dd6eee4f",
+    "merges.txt": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5",
+    "special_tokens_map.json": "92ba8063bf40aa163eadebbfe0de07c2aebe44cf0d4a9e8726580b0781fd2640",
+    "added_tokens.json": "72e4ab6acb0d9309ac3df4b526ae5fd80a2da5bc5ab7bb02d85096a374f69193",
+    "tokenizer_config.json": "bca16a2ac1ddbd78b8d6228f0031884cc74b6ea54b967d6f6d2ebae9ccde23e6"
+  },
+  "tokenizer_class": "GPT2Tokenizer",
+  "vocab_size": 50257,
+  "model_max_length": 1024,
+  "special_tokens": {
+    "bos": "<|endoftext|>",
+    "eos": "<|endoftext|>",
+    "unk": "<|endoftext|>",
+    "pad": "<|endoftext|>",
+    "sep": null,
+    "cls": null,
+    "mask": null
+  },
+  "all_special_tokens": [
+    "<|endoftext|>"
+  ],
+  "all_special_ids": [
+    50256
+  ],
+  "encode_kwargs": {
+    "add_special_tokens": true
+  }
+}

@@ -1,0 +1,44 @@
+[package]
+name = "chatterbox-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.7", features = ["multipart"] }
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
+tower = "0.5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4", features = ["derive", "env"] }
+serde_yaml = "0.9"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+hound = "3"   # WAV encoding
+bytes = "1"
+parking_lot = "0.12"
+rust-embed = "8"   # embed web/ UI assets into the binary (single-artifact)
+
+# Optional encoders (feature "audio-formats"). Off by default so the lean
+# build (and the mingw Windows dev build) needs no extra C libraries.
+# mp3lame-sys vendors + builds libmp3lame from source; audiopus_sys can
+# build libopus from source — so enabling the feature needs only a C
+# compiler, not system -dev packages.
+mp3lame-encoder = { version = "0.2", optional = true }
+audiopus = { version = "0.2", optional = true }
+ogg = { version = "0.9", optional = true }
+
+[features]
+default = []
+audio-formats = ["dep:mp3lame-encoder", "dep:audiopus", "dep:ogg"]
+
+[build-dependencies]
+
+# Optional: would let us use bindgen for the C header, but the API
+# surface is small enough that hand-rolled extern declarations are
+# simpler and have no build dependency.
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+opt-level = 3

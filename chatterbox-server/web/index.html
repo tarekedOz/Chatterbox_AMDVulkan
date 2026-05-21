@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chatterbox TTS</title>
+  <link rel="stylesheet" href="/pico.min.css" />
+  <link rel="stylesheet" href="/app.css" />
+  <!-- app.js must load before Alpine so ttsApp() is defined when Alpine
+       auto-starts (Alpine's CDN build initializes as soon as it runs). -->
+  <script defer src="/app.js"></script>
+  <script defer src="/alpine.min.js"></script>
+</head>
+<body>
+  <main class="container" x-data="ttsApp()">
+    <header class="app-header">
+      <hgroup>
+        <h1>Chatterbox TTS</h1>
+        <p>AMD Vulkan port &middot; local synthesis</p>
+      </hgroup>
+      <button class="theme-toggle outline secondary" @click="toggleTheme()"
+              :aria-label="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+        <span x-text="theme === 'dark' ? '☀' : '☾'"></span>
+      </button>
+    </header>
+
+    <!-- Text input -->
+    <label for="text">Text
+      <textarea id="text" rows="5" x-model="text"
+                placeholder="Type something for the model to say..."
+                :aria-invalid="text.length > maxChars ? 'true' : null"></textarea>
+      <small>
+        <span x-text="text.length"></span> / <span x-text="maxChars"></span> characters
+        <span x-show="text.length > maxChars" class="warn"> — long text will be chunked (Phase 3)</span>
+      </small>
+    </label>
+
+    <!-- Voice picker -->
+    <label for="voice">Voice
+      <select id="voice" x-model="voice" :disabled="useClone || voices.length === 0">
+        <template x-if="voices.length === 0">
+          <option value="" x-text="voicesError || 'Loading voices...'"></option>
+        </template>
+        <template x-for="v in voices" :key="v">
+          <option :value="v" x-text="v"></option>
+        </template>
+      </select>
+    </label>
+
+    <!-- Voice cloning -->
+    <fieldset>
+      <legend>Or clone a voice from a reference clip</legend>
+      <div class="grid">
+        <input type="file" accept=".wav,audio/wav,audio/x-wav"
+               @change="onCloneFile($event)" />
+        <button class="outline" @click="clone()"
+                :disabled="!cloneFile || cloning" :aria-busy="cloning"
+                x-text="cloning ? 'Cloning...' : 'Upload & clone'"></button>
+      </div>
+      <small x-show="cloneStatus" :class="cloneError ? 'error' : ''" x-text="cloneStatus"></small>
+    </fieldset>
+    <p x-show="useClone" x-cloak>
+      <mark>Using cloned voice</mark>
+      <a href="#" @click.prevent="useLibraryVoice()">use a library voice instead</a>
+    </p>
+
+    <!-- Advanced options -->
+    <details>
+      <summary>Advanced</summary>
+      <div class="grid">
+        <label for="seed">Seed
+          <input type="number" id="seed" x-model.number="seed" min="0" step="1"
+                 placeholder="0 = random/default" />
+        </label>
+        <label for="format">Output format
+          <select id="format" x-model="format">
+            <template x-for="f in formats" :key="f">
+              <option :value="f" x-text="f.toUpperCase()"></option>
+            </template>
+          </select>
+          <small x-show="formats.length <= 2">
+            Build with <code>--features audio-formats</code> for MP3 / Opus.
+          </small>
+        </label>
+      </div>
+
+      <label>Temperature: <strong x-text="temperature.toFixed(2)"></strong>
+        <input type="range" min="0.05" max="1.5" step="0.05" x-model.number="temperature" />
+      </label>
+      <label>Top-p: <strong x-text="topP.toFixed(2)"></strong>
+        <input type="range" min="0.05" max="1.0" step="0.01" x-model.number="topP" />
+      </label>
+      <label>Top-k: <strong x-text="topK"></strong>
+        <input type="range" min="0" max="200" step="1" x-model.number="topK" />
+      </label>
+      <label>Repetition penalty: <strong x-text="repetitionPenalty.toFixed(2)"></strong>
+        <input type="range" min="1.0" max="2.0" step="0.05" x-model.number="repetitionPenalty" />
+      </label>
+      <label>CFM steps: <strong x-text="cfmTimesteps"></strong>
+        <input type="range" min="1" max="10" step="1" x-model.number="cfmTimesteps" />
+        <small>More steps = smoother mel, slower. Default 2 (meanflow).</small>
+      </label>
+
+      <button class="outline secondary" @click="resetParams()">Reset to defaults</button>
+
+      <fieldset>
+        <legend>Presets</legend>
+        <div class="grid">
+          <select x-model="selectedPreset" @change="loadPreset(selectedPreset)"
+                  :disabled="Object.keys(presets).length === 0">
+            <option value="" x-text="Object.keys(presets).length ? '— load preset —' : 'no presets saved'"></option>
+            <template x-for="name in Object.keys(presets)" :key="name">
+              <option :value="name" x-text="name"></option>
+            </template>
+          </select>
+          <input type="text" x-model="presetName" placeholder="new preset name"
+                 @keydown.enter.prevent="savePreset()" />
+        </div>
+        <div class="grid">
+          <button class="outline" @click="savePreset()" :disabled="!presetName.trim()">Save preset</button>
+          <button class="outline secondary" @click="deletePreset(selectedPreset)"
+                  :disabled="!selectedPreset">Delete preset</button>
+        </div>
+      </fieldset>
+    </details>
+
+    <!-- Generate -->
+    <label>
+      <input type="checkbox" role="switch" x-model="stream" />
+      Stream (progressive playback — plays as it synthesizes; no file)
+    </label>
+    <button @click="generate()" :aria-busy="busy"
+            :disabled="busy || !text.trim() || (!useClone && !voice)">
+      <span x-text="busy ? 'Synthesizing...' : 'Generate'"></span>
+    </button>
+    <p x-show="error" class="error" x-text="error"></p>
+    <p x-show="stream && streamSamples > 0" x-cloak>
+      <small x-text="'Streamed ' + (streamSamples / 24000).toFixed(1) + ' s of audio.'"></small>
+    </p>
+
+    <!-- Result -->
+    <article x-show="audioUrl" x-cloak>
+      <header>Result</header>
+      <audio :src="audioUrl" controls style="width:100%"></audio>
+      <footer>
+        <a :href="audioUrl" :download="downloadName" role="button" class="outline">Download</a>
+      </footer>
+    </article>
+
+    <!-- History -->
+    <article x-show="history.length" x-cloak>
+      <header>
+        Recent generations
+        <a href="#" @click.prevent="clearHistory()" class="secondary" style="float:right">clear</a>
+      </header>
+      <ul class="history">
+        <template x-for="h in history" :key="h.id">
+          <li>
+            <small x-text="new Date(h.ts).toLocaleTimeString()"></small>
+            <strong x-text="h.useClone ? 'cloned' : h.voice"></strong>
+            <span class="hist-text"
+                  x-text="h.text.length > 60 ? h.text.slice(0, 60) + '…' : h.text"></span>
+            <button class="outline" @click="replay(h)" :disabled="busy">Replay</button>
+          </li>
+        </template>
+      </ul>
+    </article>
+
+    <footer class="app-footer">
+      <small>
+        Drop-in OpenAI API at <code>/v1/audio/speech</code> &middot;
+        rich API under <code>/api/*</code>
+      </small>
+    </footer>
+  </main>
+</body>
+</html>
