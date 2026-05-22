@@ -15,7 +15,11 @@
 #>
 [CmdletBinding()]
 param(
-  [string]$BaseUrl = "https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v1",
+  # Advanced: override BOTH the app-package host and the weights host (e.g.
+  # a private registry). Left unset for the public flow, where the app
+  # package comes from the v1 release and the weights come from whatever
+  # base_url the manifest declares (models-v1).
+  [string]$BaseUrl,
   [string]$Token,
   [string]$InstallDir = (Join-Path $env:LOCALAPPDATA 'Chatterbox TTS'),
   [string]$Package = 'chatterbox-tts-win-x64.zip',
@@ -24,10 +28,12 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-$base = $BaseUrl.TrimEnd('/')
+# App-package host: the v1 release by default; -BaseUrl overrides it.
+$pkgBase = if ($BaseUrl) { $BaseUrl.TrimEnd('/') }
+           else { 'https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v1' }
 $headers = @{}
 if ($Token) {
-  if ($base -match '/api/v4/') { $headers['PRIVATE-TOKEN'] = $Token }
+  if ($pkgBase -match '/api/v4/') { $headers['PRIVATE-TOKEN'] = $Token }
   else { $headers['Authorization'] = "Bearer $Token" }
 }
 
@@ -38,14 +44,16 @@ Write-Host "Installing Chatterbox TTS -> $InstallDir"
 #    + models.manifest.json + config.yaml.
 $zip = Join-Path ([System.IO.Path]::GetTempPath()) $Package
 Write-Host "Downloading $Package ..."
-Invoke-WebRequest -Uri "$base/$Package" -OutFile $zip -Headers $headers -UseBasicParsing -MaximumRedirection 5
+Invoke-WebRequest -Uri "$pkgBase/$Package" -OutFile $zip -Headers $headers -UseBasicParsing -MaximumRedirection 5
 Expand-Archive -Path $zip -DestinationPath $InstallDir -Force
 Remove-Item $zip -Force
 
-# 2) Model weights (sha256-verified; skips files already present).
+# 2) Model weights (sha256-verified; skips files already present). Let the
+#    manifest's base_url (models-v1) win unless the caller overrode the host.
 $fetch = Join-Path $InstallDir 'fetch-models.ps1'
-$fetchParams = @{ InstallDir = $InstallDir; BaseUrl = $base }
-if ($Token) { $fetchParams['Token'] = $Token }
+$fetchParams = @{ InstallDir = $InstallDir }
+if ($BaseUrl) { $fetchParams['BaseUrl'] = $pkgBase }
+if ($Token)   { $fetchParams['Token']   = $Token }
 & $fetch @fetchParams
 if ($LASTEXITCODE -ne 0) { throw "model download failed" }
 
