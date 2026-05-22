@@ -41,10 +41,37 @@ chatterbox-server/   Rust HTTP server (axum), FFI to the engine's C ABI
 scripts/             PyTorch→GGUF conversion + NumPy parity oracles
 models/              GGUF weights (gitignored — see below)
 tests/               parity reference binaries + reference voices
+dist/                Windows installer (thin, download-on-first-run)
 Dockerfile           multi-stage build → single Debian-slim image
 ```
 
-## Quick start
+## Install (Windows)
+
+The Windows build is a single self-contained `chatterbox-server.exe`
+(engine + web UI + HTTP, Vulkan-accelerated — no Docker, no runtime DLLs).
+The installer is **thin**: the ~1.4 GB model weights download + verify on
+first launch (like Ollama / LM Studio), they aren't bundled.
+
+**One call** (PowerShell) — downloads the ~8 MB app, fetches + checksums
+the weights, adds a Start Menu shortcut, and opens the UI:
+
+```powershell
+irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v1/install.ps1 | iex
+```
+
+**Or the GUI installer** — download `chatterbox-tts-setup.exe` from the
+release and run it (same result).
+
+Either way, first launch does a one-time weights download (cached
+afterward), then serves the web UI at **http://127.0.0.1:8087/** with GPU
+acceleration via Vulkan. Installer internals + how to build/publish it
+(manifest, downloader, Inno Setup script) are in [`dist/`](dist/README.md).
+
+> Distribution model: the installer carries only the binary + a manifest
+> (file list + SHA-256); `fetch-models.ps1` pulls the weights from the
+> release host on first run and verifies each checksum.
+
+## Build & run from source (developers)
 
 **1. Build the engine** — see [`chatterbox-cpp/README.md`](chatterbox-cpp/README.md)
 for prerequisites (Scoop GCC/CMake/Ninja/Vulkan), model setup, and the full

@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "comment": "Model weights fetched on first run. base_url is the default (public) host; fetch-models.ps1 -BaseUrl overrides it. Each file is downloaded as <base_url>/<name> and verified against sha256.",
+  "base_url": "https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/models-v1",
+  "files": [
+    {
+      "name": "chatterbox-turbo-t3-fp16.gguf",
+      "dest": "models/chatterbox-turbo-t3-fp16.gguf",
+      "size": 857001760,
+      "sha256": "801657a55c82575c1ebef51356155baff0a27490f21825ccfb4b733eae965bfb"
+    },
+    {
+      "name": "chatterbox-turbo-ve-fp16.gguf",
+      "dest": "models/chatterbox-turbo-ve-fp16.gguf",
+      "size": 2861440,
+      "sha256": "6775e29ee2d01b63c6fb103bfc0276cf3028544be6a7a88c1f553b9e274dd39e"
+    },
+    {
+      "name": "chatterbox-turbo-s3gen-fp16.gguf",
+      "dest": "models/chatterbox-turbo-s3gen-fp16.gguf",
+      "size": 533624832,
+      "sha256": "44ca898ec96e6d276f3f4fc111a6b8211300868278db43f65a8f269a080c381e"
+    },
+    {
+      "name": "voices.gguf",
+      "dest": "models/voices.gguf",
+      "size": 3787712,
+      "sha256": "821e57ad409ee8c18f8c893e2c3efac12d0c15ff71039683498f0adc4163dccb"
+    }
+  ]
+}
