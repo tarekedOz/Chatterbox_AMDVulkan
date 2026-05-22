@@ -70,5 +70,7 @@ chatterbox-cpp/build_*/
 
 # Internal-only docs — not for public release (contains build rationale /
 # cross-project references). A curated public docs set will be added later.
-docs/
+# Exception: docs/assets/ holds the public README screenshots.
+docs/*
+!docs/assets/
 chatterbox-vulkan-design.md
