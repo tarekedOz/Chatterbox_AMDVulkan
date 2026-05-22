@@ -13,6 +13,7 @@ launch, the same pattern as Ollama / LM Studio / whisper.cpp.
 | `models.manifest.json` | weights to fetch: name, dest, size, sha256, `base_url` |
 | `fetch-models.ps1`     | first-run downloader (skip-if-present, sha256-verify, resumable) |
 | `launch.ps1`           | shortcut target: fetch-if-missing → start server → open browser |
+| `uninstall.ps1`        | target of the Uninstall shortcut: stop server → remove install dir (incl. weights) + shortcuts |
 | `config.yaml`          | installed server config (model paths, bind addr) |
 | `chatterbox.iss`       | Inno Setup script that produces `chatterbox-tts-setup.exe` |
 
@@ -20,15 +21,32 @@ launch, the same pattern as Ollama / LM Studio / whisper.cpp.
 
 - **One call** (no compiled installer needed): publish `install.ps1` +
   an app zip `chatterbox-tts-win-x64.zip` (server.exe + `fetch-models.ps1`
-  + `launch.ps1` + `models.manifest.json` + `config.yaml`) + the GGUFs as
-  release assets. Users run `irm <base>/install.ps1 | iex`. Build the zip:
+  + `launch.ps1` + `uninstall.ps1` + `models.manifest.json` + `config.yaml`)
+  + the GGUFs as release assets. Users run `irm <base>/install.ps1 | iex`.
+  Build the zip:
   ```powershell
   $stage = "$env:TEMP\cbpkg"; ni -ItemType Directory -Force $stage | Out-Null
   copy chatterbox-server\target\release\chatterbox-server.exe $stage\
-  copy dist\fetch-models.ps1,dist\launch.ps1,dist\models.manifest.json,dist\config.yaml $stage\
+  copy dist\fetch-models.ps1,dist\launch.ps1,dist\uninstall.ps1,dist\models.manifest.json,dist\config.yaml $stage\
   Compress-Archive "$stage\*" dist\chatterbox-tts-win-x64.zip -Force
   ```
 - **GUI installer**: compile `chatterbox.iss` with Inno Setup (below).
+
+## Uninstall / upgrade
+
+**Uninstall**
+- *GUI install* (`chatterbox-tts-setup.exe`): **Settings → Apps**, or the
+  **Uninstall Chatterbox TTS** Start Menu entry. The `[UninstallDelete]` rule
+  removes the downloaded weights too.
+- *One-call install*: run the **Uninstall Chatterbox TTS** Start Menu shortcut
+  (it runs `uninstall.ps1`), or manually delete `%LOCALAPPDATA%\Chatterbox TTS`
+  plus the Start Menu shortcuts.
+
+**Upgrade** — there is no auto-update; re-run the installer against the new
+release. The one-call path re-extracts the app (an existing `config.yaml` is
+preserved) and `fetch-models.ps1` re-downloads only weights whose SHA-256
+changed. The GUI path installs in place over the previous version (the fixed
+`AppId` keeps it a single Add/Remove Programs entry).
 
 ## How first-run download works
 

@@ -17,6 +17,9 @@
 #define AppPublisher "Chatterbox AMD Vulkan"
 
 [Setup]
+; Stable identity for clean in-place upgrades + a single Add/Remove Programs
+; entry. Do NOT change this between versions.
+AppId={{3400EB4C-D0EC-4523-B084-7D34371CA608}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}

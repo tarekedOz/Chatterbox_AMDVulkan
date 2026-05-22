@@ -11,7 +11,7 @@
 
   Downloads the ~8 MB app package (self-contained server + scripts +
   manifest), then fetch-models.ps1 downloads + verifies the ~1.4 GB
-  weights, makes a Start Menu shortcut, and launches.
+  weights, makes Start Menu shortcuts (launch + uninstall), and launches.
 #>
 [CmdletBinding()]
 param(
@@ -45,8 +45,16 @@ Write-Host "Installing Chatterbox TTS -> $InstallDir"
 $zip = Join-Path ([System.IO.Path]::GetTempPath()) $Package
 Write-Host "Downloading $Package ..."
 Invoke-WebRequest -Uri "$pkgBase/$Package" -OutFile $zip -Headers $headers -UseBasicParsing -MaximumRedirection 5
+
+# Preserve an existing user config across re-installs / upgrades (the zip
+# carries a default config.yaml; don't clobber the user's edits).
+$cfg = Join-Path $InstallDir 'config.yaml'
+if (Test-Path $cfg) { Copy-Item $cfg "$cfg.keep" -Force }
+
 Expand-Archive -Path $zip -DestinationPath $InstallDir -Force
 Remove-Item $zip -Force
+
+if (Test-Path "$cfg.keep") { Move-Item "$cfg.keep" $cfg -Force }
 
 # 2) Model weights (sha256-verified; skips files already present). Let the
 #    manifest's base_url (models-v1) win unless the caller overrode the host.
@@ -67,6 +75,15 @@ $sc.Arguments = "-ExecutionPolicy Bypass -NoProfile -File `"$InstallDir\launch.p
 $sc.WorkingDirectory = $InstallDir
 $sc.Description = 'Chatterbox TTS'
 $sc.Save()
+
+# Uninstall shortcut -> uninstall.ps1 (shipped in the app package).
+$unlnk = Join-Path $startMenu 'Uninstall Chatterbox TTS.lnk'
+$su = $ws.CreateShortcut($unlnk)
+$su.TargetPath = 'powershell.exe'
+$su.Arguments = "-ExecutionPolicy Bypass -NoProfile -File `"$InstallDir\uninstall.ps1`""
+$su.WorkingDirectory = $InstallDir
+$su.Description = 'Uninstall Chatterbox TTS'
+$su.Save()
 
 Write-Host "Installed. Start Menu shortcut: $lnk"
 if (-not $NoLaunch) { & (Join-Path $InstallDir 'launch.ps1') }
