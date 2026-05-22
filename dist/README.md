@@ -43,10 +43,29 @@ launch, the same pattern as Ollama / LM Studio / whisper.cpp.
   plus the Start Menu shortcuts.
 
 **Upgrade** — there is no auto-update; re-run the installer against the new
-release. The one-call path re-extracts the app (an existing `config.yaml` is
-preserved) and `fetch-models.ps1` re-downloads only weights whose SHA-256
-changed. The GUI path installs in place over the previous version (the fixed
-`AppId` keeps it a single Add/Remove Programs entry).
+release. Each release's `install.ps1` defaults `-Tag` to its own version, so
+the one-liner from the new release just works:
+
+```powershell
+irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v2/install.ps1 | iex
+```
+
+To force a specific tag from an older script, pass `-Tag` (wrap a remote run
+in a scriptblock so the argument is passed):
+
+```powershell
+& ([scriptblock]::Create((irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v2/install.ps1))) -Tag v2
+```
+
+The one-call path re-extracts the app (an existing `config.yaml` is preserved)
+and `fetch-models.ps1` re-downloads only weights whose SHA-256 changed (weights
+follow the `base_url` baked into that release's manifest). The GUI path installs
+in place over the previous version (the fixed `AppId` keeps it a single
+Add/Remove Programs entry).
+
+> Cutting a new release: bump the `-Tag` default in `install.ps1` and
+> `AppVersion` in `chatterbox.iss` to the new version, then publish the app
+> package + weights under the new tag(s).
 
 ## How first-run download works
 

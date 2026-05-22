@@ -9,6 +9,10 @@
       .\install.ps1 -BaseUrl <release-or-registry-url> [-Token <pat>] `
                     [-InstallDir <dir>] [-NoLaunch]
 
+  Upgrade to a newer release (point -Tag at the new tag; for a remote run,
+  wrap in a scriptblock so the argument is passed):
+      & ([scriptblock]::Create((irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v2/install.ps1))) -Tag v2
+
   Downloads the ~8 MB app package (self-contained server + scripts +
   manifest), then fetch-models.ps1 downloads + verifies the ~1.4 GB
   weights, makes Start Menu shortcuts (launch + uninstall), and launches.
@@ -16,10 +20,12 @@
 [CmdletBinding()]
 param(
   # Advanced: override BOTH the app-package host and the weights host (e.g.
-  # a private registry). Left unset for the public flow, where the app
-  # package comes from the v1 release and the weights come from whatever
-  # base_url the manifest declares (models-v1).
+  # a private registry). Takes precedence over -Tag. Left unset for the
+  # public flow, where the weights follow the manifest base_url (models-v1).
   [string]$BaseUrl,
+  # Release tag the app package (install.ps1 + zip) is pulled from. Defaults
+  # to this installer's version; pass e.g. -Tag v2 to upgrade.
+  [string]$Tag = 'v1',
   [string]$Token,
   [string]$InstallDir = (Join-Path $env:LOCALAPPDATA 'Chatterbox TTS'),
   [string]$Package = 'chatterbox-tts-win-x64.zip',
@@ -28,9 +34,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-# App-package host: the v1 release by default; -BaseUrl overrides it.
+# App-package host: the -Tag release by default; -BaseUrl overrides it.
 $pkgBase = if ($BaseUrl) { $BaseUrl.TrimEnd('/') }
-           else { 'https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v1' }
+           else { "https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/$Tag" }
 $headers = @{}
 if ($Token) {
   if ($pkgBase -match '/api/v4/') { $headers['PRIVATE-TOKEN'] = $Token }
