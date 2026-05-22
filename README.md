@@ -67,6 +67,17 @@ afterward), then serves the web UI at **http://127.0.0.1:8087/** with GPU
 acceleration via Vulkan. Installer internals + how to build/publish it
 (manifest, downloader, Inno Setup script) are in [`dist/`](dist/README.md).
 
+**Upgrade** — no auto-update; re-run the new release's one-liner (each
+release's `install.ps1` defaults to its own tag). It re-extracts the app
+(your `config.yaml` is preserved) and only re-downloads weights whose
+SHA-256 changed; the GUI installer installs in place over the previous
+version.
+
+**Uninstall** — GUI install: **Settings → Apps** or the *Uninstall
+Chatterbox TTS* Start Menu entry. One-call install: the *Uninstall
+Chatterbox TTS* Start Menu shortcut (runs `uninstall.ps1`). Both remove
+the downloaded weights. Full details in [`dist/README.md`](dist/README.md#uninstall--upgrade).
+
 > Distribution model: the installer carries only the binary + a manifest
 > (file list + SHA-256); `fetch-models.ps1` pulls the weights from the
 > release host on first run and verifies each checksum.
