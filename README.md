@@ -86,6 +86,17 @@ irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v1/insta
 **Or the GUI installer** — download `chatterbox-tts-setup.exe` from the release
 and run it (same result).
 
+**If PowerShell blocks the script** — a `.ps1` saved from the web is flagged by
+Windows (Mark of the Web), so running it directly can fail with "running scripts
+is disabled" or a security warning. Unblock it first, then run it:
+
+```powershell
+Unblock-File -Path "$HOME\Downloads\install.ps1"   # adjust to where you saved it
+```
+
+(The `irm … | iex` one-liner above isn't affected — it runs from memory, not a
+saved file.)
+
 Either way, first launch does a one-time weights download (cached afterward),
 then serves the web UI at **http://127.0.0.1:8087/** with GPU acceleration via
 Vulkan. Installer internals + how to build/publish it are in

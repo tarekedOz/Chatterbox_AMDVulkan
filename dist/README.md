@@ -32,6 +32,12 @@ launch, the same pattern as Ollama / LM Studio / whisper.cpp.
   ```
 - **GUI installer**: compile `chatterbox.iss` with Inno Setup (below).
 
+> **If PowerShell blocks `install.ps1`** run as a saved file: Windows flags
+> web-downloaded scripts (Mark of the Web), so a direct run can fail with
+> "running scripts is disabled" / a security warning. Unblock it first —
+> `Unblock-File -Path .\install.ps1` (use the actual path) — then re-run. The
+> `irm <base>/install.ps1 | iex` one-liner isn't affected; it never touches disk.
+
 ## Uninstall / upgrade
 
 **Uninstall**
