@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
   Download + verify the Chatterbox model weights listed in a manifest.
-  Run on first launch (the installer ships only the ~8 MB binary).
+  Run on first launch (the installer ships only the ~64 MB binary).
 
 .PARAMETER ManifestPath
   Path to models.manifest.json (default: alongside this script).

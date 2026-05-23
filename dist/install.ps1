@@ -13,7 +13,7 @@
   wrap in a scriptblock so the argument is passed):
       & ([scriptblock]::Create((irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v2/install.ps1))) -Tag v2
 
-  Downloads the ~8 MB app package (self-contained server + scripts +
+  Downloads the ~20 MB app package (self-contained server + scripts +
   manifest), then fetch-models.ps1 downloads + verifies the ~1.4 GB
   weights, makes Start Menu shortcuts (launch + uninstall), and launches.
 #>

@@ -1,6 +1,6 @@
 # Windows installer (thin, download-on-first-run)
 
-The installer ships only the self-contained **~8 MB** `chatterbox-server.exe`
+The installer ships only the self-contained **~64 MB** `chatterbox-server.exe`
 (engine + embedded web UI + HTTP, statically linked, GPU via Vulkan). The
 **~1.4 GB model weights are not bundled** — they download + verify on first
 launch, the same pattern as Ollama / LM Studio / whisper.cpp.

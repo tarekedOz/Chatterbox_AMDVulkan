@@ -76,7 +76,7 @@ web UI + HTTP, Vulkan-accelerated — no Docker, no runtime DLLs). The installer
 is **thin**: the ~1.4 GB model weights download + verify on first launch, not
 bundled.
 
-**One call** (PowerShell) — downloads the ~8 MB app, fetches + checksums the
+**One call** (PowerShell) — downloads the ~20 MB app, fetches + checksums the
 weights, adds a Start Menu shortcut, and opens the UI:
 
 ```powershell

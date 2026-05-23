@@ -1,6 +1,6 @@
 ; Inno Setup script for the thin Chatterbox TTS installer.
 ;
-; Ships only the self-contained ~8 MB server binary + launcher + manifest;
+; Ships only the self-contained ~64 MB server binary + launcher + manifest;
 ; the ~1.4 GB model weights are downloaded + verified on first run by
 ; fetch-models.ps1 (see models.manifest.json / dist/README.md).
 ;
