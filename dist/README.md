@@ -86,18 +86,30 @@ intended GitHub distribution) download anonymously, no token needed.
 ## Building the installer
 
 1. **Build the Vulkan server binary** and stage it here as
-   `chatterbox-server.exe`:
+   `chatterbox-server.exe`. The key bits: build the engine with
+   `-DCHATTERBOX_VULKAN=ON`, point `CHATTERBOX_CPP_BUILD_DIR` at that
+   tree, and set `CHATTERBOX_VULKAN_SDK` (or `VULKAN_SDK`) so `build.rs`
+   can link the Vulkan loader (`vulkan-1.lib`). Without this you get a
+   **CPU-only** server (it logs `using CPU backend`).
    ```powershell
    $env:CC="$HOME/scoop/apps/gcc/current/bin/gcc.exe"; $env:CXX="$HOME/scoop/apps/gcc/current/bin/g++.exe"
    cmake -S chatterbox-cpp -B chatterbox-cpp/build_vk -G Ninja -DCMAKE_BUILD_TYPE=Release -DCHATTERBOX_VULKAN=ON
    cmake --build chatterbox-cpp/build_vk --target chatterbox
    $env:CHATTERBOX_CPP_BUILD_DIR="$PWD/chatterbox-cpp/build_vk"
+   $env:CHATTERBOX_VULKAN_SDK="$HOME/scoop/apps/vulkan/current"   # has Lib\vulkan-1.lib
    $env:Path="$HOME/scoop/apps/gcc/current/bin;$env:Path"; $env:CHATTERBOX_GCC_LIB_DIR="$HOME/scoop/apps/gcc/current/lib"
-   cargo build --release --manifest-path chatterbox-server/Cargo.toml --features audio-formats
+   cargo build --release --manifest-path chatterbox-server/Cargo.toml
    copy chatterbox-server\target\release\chatterbox-server.exe dist\
    ```
-   (Omit `--features audio-formats` for a WAV/PCM-only build; the
-   audio-formats C-lib encoders need their libs available to the linker.)
+   `build.rs` auto-detects the Vulkan engine (it sees `ggml-vulkan.a` in
+   the build dir) and links it + the loader; a CPU build dir links neither.
+   At runtime the server logs `using Vulkan backend (Vulkan0)` and falls
+   back to CPU only if no Vulkan device is found. The Vulkan loader
+   (`vulkan-1.dll`) ships with the GPU driver — nothing extra to bundle.
+
+   > **Windows = WAV/PCM only.** Don't add `--features audio-formats` on
+   > Windows: the MP3/Opus C-lib encoders (`audiopus_sys`) don't build on
+   > the mingw toolchain. MP3/Opus are a Linux/Docker feature.
 2. **Publish the weights** to the release host and set `base_url` in
    `models.manifest.json` to match (e.g.
    `https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/models-v1`).

@@ -78,6 +78,16 @@ fn main() {
     }
 
     let ggml_dir = build_dir.join("third_party").join("ggml").join("src");
+    let vk_dir = ggml_dir.join("ggml-vulkan");
+
+    // Detect a Vulkan-enabled engine build by the presence of its static
+    // lib. A CPU-only build dir won't have it, so this auto-adapts to
+    // whichever build dir CHATTERBOX_CPP_BUILD_DIR points at.
+    let vulkan = vk_dir.join("ggml-vulkan.a").exists()
+        || vk_dir.join("libggml-vulkan.a").exists();
+    if vulkan {
+        println!("cargo:warning=chatterbox-server: linking Vulkan backend (ggml-vulkan found)");
+    }
 
     // Library search paths.
     println!("cargo:rustc-link-search=native={}", build_dir.display());
@@ -86,8 +96,12 @@ fn main() {
         "cargo:rustc-link-search=native={}",
         ggml_dir.join("ggml-cpu").display()
     );
+    if vulkan {
+        println!("cargo:rustc-link-search=native={}", vk_dir.display());
+    }
 
-    // Static libs (order matters for the GCC linker: dependents first).
+    // Static libs (order matters for the GCC linker: dependents first, so
+    // ggml-vulkan goes before ggml-base which it depends on).
     //
     // ggml's sub-build emits filenames that differ by platform:
     //   Linux/macOS: libggml.a, libggml-cpu.a, libggml-base.a
@@ -98,10 +112,16 @@ fn main() {
     if cfg!(target_os = "windows") {
         println!("cargo:rustc-link-lib=static:+verbatim=ggml.a");
         println!("cargo:rustc-link-lib=static:+verbatim=ggml-cpu.a");
+        if vulkan {
+            println!("cargo:rustc-link-lib=static:+verbatim=ggml-vulkan.a");
+        }
         println!("cargo:rustc-link-lib=static:+verbatim=ggml-base.a");
     } else {
         println!("cargo:rustc-link-lib=static=ggml");
         println!("cargo:rustc-link-lib=static=ggml-cpu");
+        if vulkan {
+            println!("cargo:rustc-link-lib=static=ggml-vulkan");
+        }
         println!("cargo:rustc-link-lib=static=ggml-base");
     }
 
@@ -124,6 +144,38 @@ fn main() {
     } else if cfg!(target_os = "macos") {
         println!("cargo:rustc-link-lib=c++");
         println!("cargo:rustc-link-lib=omp");
+    }
+
+    // Vulkan loader (printed after ggml-vulkan so it resolves the vk*
+    // references). Only for a Vulkan engine build.
+    if vulkan {
+        if cfg!(target_os = "windows") {
+            // vulkan-1.lib lives in <sdk>\Lib. SDK root comes from
+            // CHATTERBOX_VULKAN_SDK or the standard VULKAN_SDK env var.
+            let sdk = env::var("CHATTERBOX_VULKAN_SDK")
+                .or_else(|_| env::var("VULKAN_SDK"))
+                .ok();
+            match sdk {
+                Some(s) => {
+                    println!(
+                        "cargo:rustc-link-search=native={}",
+                        PathBuf::from(&s).join("Lib").display()
+                    );
+                    // `:+verbatim` -> `-l:vulkan-1.lib` so mingw ld picks
+                    // up the MSVC-style import lib by its exact name.
+                    println!("cargo:rustc-link-lib=static:+verbatim=vulkan-1.lib");
+                }
+                None => panic!(
+                    "Vulkan engine build detected but neither CHATTERBOX_VULKAN_SDK \
+                     nor VULKAN_SDK is set; cannot find vulkan-1.lib"
+                ),
+            }
+        } else {
+            // Linux/macOS: the loader is on the standard library path.
+            println!("cargo:rustc-link-lib=dylib=vulkan");
+        }
+        println!("cargo:rerun-if-env-changed=VULKAN_SDK");
+        println!("cargo:rerun-if-env-changed=CHATTERBOX_VULKAN_SDK");
     }
 
     println!("cargo:rerun-if-env-changed=CHATTERBOX_CPP_BUILD_DIR");
