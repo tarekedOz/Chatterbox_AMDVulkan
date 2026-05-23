@@ -10,6 +10,8 @@ ve_gguf: models/chatterbox-turbo-ve-fp16.gguf
 s3gen_gguf: models/chatterbox-turbo-s3gen-fp16.gguf
 voices_gguf: tests/voices/voices.gguf
 
-addr: 127.0.0.1:8087        # bind address
+addr: 127.0.0.1:8087        # bind address: localhost only (default).
+                            # Use 0.0.0.0:8087 for LAN access (no auth;
+                            # also allow inbound TCP 8087 in the firewall).
 max_samples: 720000         # output cap, samples @ 24 kHz (30 s)
 max_chunk_chars: 300        # long-text chunk size (sentence-bounded)

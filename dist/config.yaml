@@ -4,4 +4,8 @@ t3_gguf: models/chatterbox-turbo-t3-fp16.gguf
 ve_gguf: models/chatterbox-turbo-ve-fp16.gguf
 s3gen_gguf: models/chatterbox-turbo-s3gen-fp16.gguf
 voices_gguf: models/voices.gguf
+
+# Bind address. 127.0.0.1 = this machine only (default, safe). For LAN
+# access from other devices use 0.0.0.0:8087 — then allow inbound TCP
+# 8087 in Windows Firewall. 0.0.0.0 has no auth, so only on trusted nets.
 addr: 127.0.0.1:8087

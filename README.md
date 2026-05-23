@@ -91,6 +91,21 @@ then serves the web UI at **http://127.0.0.1:8087/** with GPU acceleration via
 Vulkan. Installer internals + how to build/publish it are in
 [`dist/`](dist/README.md).
 
+**Access from other devices (LAN)** — by default the server binds
+`127.0.0.1` (this machine only). To reach it from another device, bind all
+interfaces: set `addr: 0.0.0.0:8087` in `config.yaml` (next to
+`%LOCALAPPDATA%\Chatterbox TTS\`), or pass `--addr 0.0.0.0:8087` /
+`CHATTERBOX_ADDR=0.0.0.0:8087`, then restart. Also allow inbound TCP 8087 in
+Windows Firewall (elevated PowerShell):
+
+```powershell
+New-NetFirewallRule -DisplayName 'Chatterbox TTS (8087)' -Direction Inbound `
+  -Action Allow -Protocol TCP -LocalPort 8087 -Profile Private
+```
+
+It's then reachable at `http://<your-lan-ip>:8087/`. Note: `0.0.0.0` exposes
+the UI/API with **no authentication** — only do this on a trusted network.
+
 **Upgrade** — no auto-update; re-run the new release's one-liner (each release's
 `install.ps1` defaults to its own tag). It re-extracts the app (your
 `config.yaml` is preserved) and only re-downloads weights whose SHA-256 changed.
