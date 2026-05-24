@@ -165,6 +165,19 @@ async fn list_voices(State(app): State<Arc<AppState>>) -> Json<serde_json::Value
     Json(serde_json::json!({"voices": app.voices.clone()}))
 }
 
+/// GET /v1/voices — voice catalog for OpenAI-compat clients that probe the
+/// un-namespaced path (e.g. a settings voice picker). Returns
+/// `{"voices": [{"id","name"}, ...]}` where each `id` is the exact string
+/// /v1/audio/speech accepts as `voice`, so the picker and synth agree.
+async fn list_voices_catalog(State(app): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    let voices: Vec<_> = app
+        .voices
+        .iter()
+        .map(|v| serde_json::json!({"id": v, "name": v}))
+        .collect();
+    Json(serde_json::json!({"voices": voices}))
+}
+
 /// GET /api/config — capabilities the UI needs to render correctly
 /// (e.g. which output formats this build supports).
 async fn config(State(app): State<Arc<AppState>>) -> Json<serde_json::Value> {
@@ -624,6 +637,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/health", get(health))
         .route("/v1/audio/voices", get(list_voices))
+        // Un-namespaced catalog probed by some OpenAI-compat clients:
+        // returns {id,name} objects so the voice picker matches synthesis.
+        .route("/v1/voices", get(list_voices_catalog))
         .route("/v1/audio/speech", post(speech))
         // Rich /api/* namespace used by the web UI (distinct from the
         // frozen OpenAI /v1/audio/* routes above).

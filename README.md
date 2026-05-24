@@ -168,7 +168,10 @@ POST /api/tts             -> audio  {text, voice, seed?, format?,
 
 # OpenAI-compatible (frozen; drop-in for existing clients)
 GET  /health              -> "ok"
-GET  /v1/audio/voices     -> {"voices": [...]}
+GET  /v1/audio/voices     -> {"voices": ["Abigail", ...]}            (bare strings)
+GET  /v1/voices           -> {"voices": [{"id": "Abigail", "name": "Abigail"}, ...]}
+                             catalog form for clients that probe /v1/voices
+                             instead of /v1/audio/voices; each id is a valid `voice`
 POST /v1/audio/speech     -> WAV / raw PCM   {input, voice, response_format, seed, model, speed}
 ```
 
