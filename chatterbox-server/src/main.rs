@@ -134,6 +134,8 @@ struct AppState {
     max_samples: usize,
     max_chunk_chars: usize,
     voices: Vec<String>,
+    /// Inline paralinguistic / emotion tags, e.g. "[laugh]".
+    tags: Vec<String>,
 }
 
 /// OpenAI /v1/audio/speech request body (subset; we accept the keys we
@@ -185,7 +187,14 @@ async fn config(State(app): State<Arc<AppState>>) -> Json<serde_json::Value> {
         "formats": audio::available_formats(),
         "voices": app.voices.clone(),
         "max_chunk_chars": app.max_chunk_chars,
+        "tags": app.tags.clone(),
     }))
+}
+
+/// GET /api/tags — the paralinguistic / emotion tags the model
+/// understands inline in the text, e.g. "Well [sigh] fine.".
+async fn list_tags(State(app): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    Json(serde_json::json!({"tags": app.tags.clone()}))
 }
 
 async fn health() -> &'static str {
@@ -425,13 +434,20 @@ async fn speech(
 }
 
 /// Split text into sentences on . ! ? and newlines, keeping the
-/// trailing punctuation with its sentence.
+/// trailing punctuation with its sentence. Never splits inside a
+/// `[...]` tag.
 fn split_sentences(text: &str) -> Vec<String> {
     let mut out = Vec::new();
     let mut cur = String::new();
+    let mut in_tag = false;
     for ch in text.chars() {
         cur.push(ch);
-        if matches!(ch, '.' | '!' | '?' | '\n') {
+        match ch {
+            '[' => in_tag = true,
+            ']' | '\n' => in_tag = false,
+            _ => {}
+        }
+        if !in_tag && matches!(ch, '.' | '!' | '?' | '\n') {
             let t = cur.trim();
             if !t.is_empty() {
                 out.push(t.to_string());
@@ -446,11 +462,40 @@ fn split_sentences(text: &str) -> Vec<String> {
     out
 }
 
+/// Whitespace-separated words, except that a multi-word `[...]` tag
+/// (e.g. "[clear throat]") stays one unit so it is never split across
+/// chunks. A stray unclosed `[` gives up after `MAX_TAG_BYTES` (the
+/// engine tokenizer's tag-match limit).
+fn split_words(s: &str) -> Vec<String> {
+    const MAX_TAG_BYTES: usize = 48;
+    let mut out: Vec<String> = Vec::new();
+    let mut open = false;
+    for word in s.split_whitespace() {
+        match out.last_mut() {
+            Some(last) if open => {
+                last.push(' ');
+                last.push_str(word);
+            }
+            _ => out.push(word.to_string()),
+        }
+        if let Some(i) = word.rfind('[') {
+            open = !word[i..].contains(']');
+        } else if word.contains(']') {
+            open = false;
+        }
+        if open && out.last().map_or(0, |w| w.len()) > MAX_TAG_BYTES {
+            open = false;
+        }
+    }
+    out
+}
+
 /// Greedily pack `s`'s words into pieces of at most `max_chars`.
 fn hard_split(s: &str, max_chars: usize) -> Vec<String> {
     let mut out = Vec::new();
     let mut cur = String::new();
-    for word in s.split_whitespace() {
+    for word in split_words(s) {
+        let word = word.as_str();
         if cur.is_empty() {
             cur = word.to_string();
         } else if cur.len() + 1 + word.len() <= max_chars {
@@ -626,12 +671,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     engine.load_voices(&voices_gguf)?;
     let voices = engine.voice_names();
     info!(?voices, "voice pack loaded");
+    let tags = engine.tag_names();
+    info!(?tags, "inline tags");
 
     let state = Arc::new(AppState {
         engine: Mutex::new(engine),
         max_samples,
         max_chunk_chars,
         voices,
+        tags,
     });
 
     let app = Router::new()
@@ -645,6 +693,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // frozen OpenAI /v1/audio/* routes above).
         .route("/api/voices", get(list_voices))
         .route("/api/config", get(config))
+        .route("/api/tags", get(list_tags))
         .route("/api/tts", post(tts))
         // Voice cloning: up to 32 MB reference upload.
         .route(
@@ -661,4 +710,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("listening on http://{}", addr);
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn split_words_keeps_multiword_tag_together() {
+        assert_eq!(
+            split_words("well [clear throat] okay"),
+            vec!["well", "[clear throat]", "okay"]
+        );
+        assert_eq!(split_words("ha[clear  throat]."), vec!["ha[clear throat]."]);
+    }
+
+    #[test]
+    fn split_words_gives_up_on_unclosed_bracket() {
+        let s = "a [ b c d e f g h i j k l m n o p q r s t u v w x y z aa bb cc";
+        assert!(split_words(s).len() > 3);
+    }
+
+    #[test]
+    fn hard_split_never_breaks_a_tag() {
+        let chunks = hard_split("aaaa bbbb [clear throat] cccc", 12);
+        assert!(chunks.iter().any(|c| c == "[clear throat]"), "{chunks:?}");
+        assert!(chunks.iter().all(|c| !c.ends_with("[clear")), "{chunks:?}");
+    }
+
+    #[test]
+    fn chunk_text_keeps_tags_with_their_sentence() {
+        let chunks = chunk_text("Hi there. [laugh] That was funny!", 1000);
+        assert_eq!(chunks, vec!["Hi there. [laugh] That was funny!"]);
+        let chunks = chunk_text("Hi there. [laugh] That was funny!", 12);
+        assert_eq!(chunks, vec!["Hi there.", "[laugh] That", "was funny!"]);
+    }
 }

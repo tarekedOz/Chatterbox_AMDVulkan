@@ -65,6 +65,13 @@ extern "C" {
         out: *mut c_char,
         max_len: c_int,
     ) -> c_int;
+    pub fn chatterbox_tag_count(ctx: *const chatterbox_ctx) -> c_int;
+    pub fn chatterbox_tag_name(
+        ctx: *const chatterbox_ctx,
+        index: c_int,
+        out: *mut c_char,
+        max_len: c_int,
+    ) -> c_int;
     pub fn chatterbox_set_voice(ctx: *mut chatterbox_ctx, name: *const c_char) -> c_int;
 
     pub fn chatterbox_condition_pcm(
@@ -150,7 +157,21 @@ impl Engine {
     }
 
     pub fn voice_names(&self) -> Vec<String> {
-        let n = unsafe { chatterbox_voice_count(self.ctx) };
+        self.names(chatterbox_voice_count, chatterbox_voice_name)
+    }
+
+    /// Paralinguistic / emotion tags the model understands inline in the
+    /// text, brackets included (e.g. "[laugh]").
+    pub fn tag_names(&self) -> Vec<String> {
+        self.names(chatterbox_tag_count, chatterbox_tag_name)
+    }
+
+    fn names(
+        &self,
+        count: unsafe extern "C" fn(*const chatterbox_ctx) -> c_int,
+        name: unsafe extern "C" fn(*const chatterbox_ctx, c_int, *mut c_char, c_int) -> c_int,
+    ) -> Vec<String> {
+        let n = unsafe { count(self.ctx) };
         if n <= 0 {
             return vec![];
         }
@@ -158,7 +179,7 @@ impl Engine {
         for i in 0..n {
             let mut buf = vec![0i8; 128];
             let written = unsafe {
-                chatterbox_voice_name(
+                name(
                     self.ctx,
                     i,
                     buf.as_mut_ptr() as *mut c_char,

@@ -43,6 +43,15 @@ public:
     int32_t eos_id() const { return eos_id_; }
     size_t  vocab_size() const { return id_to_token_.size(); }
 
+    // The paralinguistic / emotion tags (e.g. "[laugh]", "[whispering]")
+    // in id order, exactly as the model's vocab spells them.
+    std::vector<std::string> added_tokens() const;
+
+    // Canonical form used for lenient tag matching: ASCII-lowercased,
+    // '_' and '-' treated as spaces, whitespace collapsed and trimmed.
+    // "[ Clear_Throat ]" -> "[clear throat]". Exposed for tests.
+    static std::string normalize_tag(const std::string& tag);
+
 private:
     Tokenizer() = default;
 
@@ -66,6 +75,9 @@ private:
     // atomic-match pre-pass so e.g. "[laugh]" emits 50275 directly without
     // entering BPE. Ordered by descending length so longest-match wins.
     std::vector<std::pair<std::string, int32_t>> added_by_len_desc_;
+    // normalize_tag(token) -> id, so "[Laugh]" / "[clear_throat]" still
+    // hit the tag instead of being BPE'd and read aloud as text.
+    std::unordered_map<std::string, int32_t> added_by_norm_;
 
     int32_t bos_id_  = -1;
     int32_t eos_id_  = -1;
@@ -73,8 +85,9 @@ private:
     int32_t pad_id_  = -1;
 
     // ---- internal helpers ----
-    // Find the longest added token at text[pos..]. Returns its id and
-    // byte length, or {-1, 0} if no match.
+    // Find the added token at text[pos..]: an exact (longest) match
+    // first, then a lenient match of the whole "[...]" span via
+    // normalize_tag. Returns its id and byte length, or {-1, 0}.
     std::pair<int32_t, size_t> match_added_token(const std::string& text,
                                                  size_t pos) const;
 

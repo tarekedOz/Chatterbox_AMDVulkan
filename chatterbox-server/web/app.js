@@ -26,6 +26,8 @@ function ttsApp() {
     maxChars: 1000,
     voices: [],
     voicesError: "",
+    // inline paralinguistic / emotion tags, e.g. "[laugh]" (from /api/config)
+    tags: [],
     busy: false,
     error: "",
     audioUrl: "",
@@ -82,9 +84,30 @@ function ttsApp() {
           this.formats = cfg.formats;
           if (!this.formats.includes(this.format)) this.format = this.formats[0];
         }
+        if (Array.isArray(cfg.tags)) this.tags = cfg.tags;
       } catch (e) {
         console.error("loadConfig:", e);
       }
+    },
+
+    // Insert a tag at the textarea cursor, space-padded so it stays a
+    // separate word, and put the cursor right after it.
+    insertTag(tag) {
+      const el = this.$refs.text;
+      const start = el ? el.selectionStart : this.text.length;
+      const end = el ? el.selectionEnd : this.text.length;
+      const before = this.text.slice(0, start);
+      const after = this.text.slice(end);
+      const pre = before && !/\s$/.test(before) ? " " : "";
+      const post = after && !/^\s/.test(after) ? " " : "";
+      const ins = pre + tag + post;
+      this.text = before + ins + after;
+      this.$nextTick(() => {
+        if (!el) return;
+        el.focus();
+        const pos = start + ins.length;
+        el.setSelectionRange(pos, pos);
+      });
     },
 
     saveSettings() {

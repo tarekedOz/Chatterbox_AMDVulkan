@@ -22,6 +22,7 @@ void set_err(const std::string& s) {
 struct chatterbox_ctx {
     std::unique_ptr<chatterbox::Chatterbox>   engine;
     std::unique_ptr<chatterbox::VoicePack>    voices;
+    std::vector<std::string>                  tags;
 };
 
 
@@ -40,6 +41,7 @@ chatterbox_ctx_t* chatterbox_init(const char* t3_path,
         set_err("chatterbox_init: Chatterbox::load failed");
         return nullptr;
     }
+    ctx->tags = ctx->engine->tags();
     return ctx.release();
 }
 
@@ -72,6 +74,22 @@ int chatterbox_voice_name(const chatterbox_ctx_t* ctx, int index,
     const std::string& n = names[index];
     const int copy = std::min<int>(static_cast<int>(n.size()), max_len - 1);
     std::memcpy(out, n.data(), copy);
+    out[copy] = '\0';
+    return copy;
+}
+
+int chatterbox_tag_count(const chatterbox_ctx_t* ctx) {
+    if (!ctx) return 0;
+    return static_cast<int>(ctx->tags.size());
+}
+
+int chatterbox_tag_name(const chatterbox_ctx_t* ctx, int index,
+                           char* out, int max_len) {
+    if (!ctx || index < 0 || !out || max_len <= 0) return -1;
+    if (index >= static_cast<int>(ctx->tags.size())) return -1;
+    const std::string& t = ctx->tags[index];
+    const int copy = std::min<int>(static_cast<int>(t.size()), max_len - 1);
+    std::memcpy(out, t.data(), copy);
     out[copy] = '\0';
     return copy;
 }

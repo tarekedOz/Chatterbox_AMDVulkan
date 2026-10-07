@@ -245,6 +245,10 @@ int Chatterbox::prompt_tokens_count() const {
 
 int Chatterbox::prompt_feat_T() const { return prompt_feat_T_; }
 
+std::vector<std::string> Chatterbox::tags() const {
+    return text_tok_ ? text_tok_->added_tokens() : std::vector<std::string>{};
+}
+
 
 // ----------------------------------------------------------------------------
 // Synthesize

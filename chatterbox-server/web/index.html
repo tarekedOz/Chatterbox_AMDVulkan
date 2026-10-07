@@ -26,7 +26,7 @@
 
     <!-- Text input -->
     <label for="text">Text
-      <textarea id="text" rows="5" x-model="text"
+      <textarea id="text" rows="5" x-model="text" x-ref="text"
                 placeholder="Type something for the model to say..."
                 :aria-invalid="text.length > maxChars ? 'true' : null"></textarea>
       <small>
@@ -34,6 +34,17 @@
         <span x-show="text.length > maxChars" class="warn"> — long text will be chunked (Phase 3)</span>
       </small>
     </label>
+
+    <!-- Paralinguistic / emotion tags -->
+    <div class="tags" x-show="tags.length" x-cloak>
+      <small>Tags — click to insert at the cursor, e.g. <code>That's hilarious [laugh] anyway.</code></small>
+      <div class="tag-list">
+        <template x-for="t in tags" :key="t">
+          <button type="button" class="outline secondary tag" @click="insertTag(t)"
+                  x-text="t" :title="'Insert ' + t"></button>
+        </template>
+      </div>
+    </div>
 
     <!-- Voice picker -->
     <label for="voice">Voice

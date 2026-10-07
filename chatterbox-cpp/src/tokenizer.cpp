@@ -3,6 +3,7 @@
 #include "gguf.h"
 
 #include <algorithm>
+#include <cctype>
 #include <climits>
 #include <cstdio>
 #include <cstring>
@@ -162,6 +163,7 @@ std::unique_ptr<Tokenizer> Tokenizer::load(gguf_context* gguf) {
         for (int32_t i = added_first; i <= added_last
              && static_cast<size_t>(i) < t->id_to_token_.size(); ++i) {
             t->added_by_len_desc_.emplace_back(t->id_to_token_[i], i);
+            t->added_by_norm_.emplace(normalize_tag(t->id_to_token_[i]), i);
         }
         std::sort(t->added_by_len_desc_.begin(), t->added_by_len_desc_.end(),
                   [](const auto& a, const auto& b) {
@@ -187,14 +189,60 @@ std::unique_ptr<Tokenizer> Tokenizer::load(gguf_context* gguf) {
     return t;
 }
 
-// ---- Added-token match ----
+// ---- Added tokens ----
+
+std::vector<std::string> Tokenizer::added_tokens() const {
+    std::vector<std::pair<int32_t, std::string>> by_id;
+    by_id.reserve(added_by_len_desc_.size());
+    for (const auto& [tok, id] : added_by_len_desc_) by_id.emplace_back(id, tok);
+    std::sort(by_id.begin(), by_id.end());
+    std::vector<std::string> out;
+    out.reserve(by_id.size());
+    for (auto& [id, tok] : by_id) out.push_back(std::move(tok));
+    return out;
+}
+
+std::string Tokenizer::normalize_tag(const std::string& tag) {
+    std::string out;
+    out.reserve(tag.size());
+    bool pending_space = false;
+    for (char c : tag) {
+        if (c == '_' || c == '-' || std::isspace(static_cast<unsigned char>(c))) {
+            pending_space = true;
+            continue;
+        }
+        // Drop separators that touch a bracket: "[ laugh ]" -> "[laugh]".
+        if (pending_space && !out.empty() && out.back() != '[' && c != ']') {
+            out.push_back(' ');
+        }
+        pending_space = false;
+        out.push_back(static_cast<char>(
+            std::tolower(static_cast<unsigned char>(c))));
+    }
+    return out;
+}
 
 std::pair<int32_t, size_t>
 Tokenizer::match_added_token(const std::string& text, size_t pos) const {
+    // Exact match first — this is upstream GPT2Tokenizer behaviour and
+    // keeps the parity test byte-exact.
     for (const auto& [tok, id] : added_by_len_desc_) {
         if (pos + tok.size() <= text.size()
             && std::memcmp(text.data() + pos, tok.data(), tok.size()) == 0) {
             return {id, tok.size()};
+        }
+    }
+    // Lenient match: upstream would BPE "[Laugh]" and the model would
+    // read it out as words, which is never what the user meant.
+    static constexpr size_t kMaxTagBytes = 48;
+    for (size_t end = pos + 1; end < text.size() && end - pos <= kMaxTagBytes; ++end) {
+        const char c = text[end];
+        if (c == '[' || c == '\n') break;
+        if (c == ']') {
+            const size_t len = end - pos + 1;
+            auto it = added_by_norm_.find(normalize_tag(text.substr(pos, len)));
+            if (it != added_by_norm_.end()) return {it->second, len};
+            break;
         }
     }
     return {-1, 0};

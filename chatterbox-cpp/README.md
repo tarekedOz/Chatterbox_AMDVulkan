@@ -146,6 +146,8 @@ chatterbox_ctx_t* chatterbox_init(t3_path, ve_path, s3gen_path);
 int   chatterbox_load_voices(ctx, voices_gguf_path);
 int   chatterbox_voice_count(ctx);
 int   chatterbox_voice_name(ctx, index, out, max_len);
+int   chatterbox_tag_count(ctx);                    // inline tags, e.g. "[laugh]"
+int   chatterbox_tag_name(ctx, index, out, max_len);
 int   chatterbox_set_voice(ctx, voice_name);
 // Clone a voice from mono fp32 PCM at sr Hz (engine resamples); caches it
 // as the active conditioning until set_voice/condition_pcm is called again.

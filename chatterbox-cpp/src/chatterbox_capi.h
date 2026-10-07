@@ -38,6 +38,15 @@ int chatterbox_voice_count(const chatterbox_ctx_t* ctx);
 int chatterbox_voice_name(const chatterbox_ctx_t* ctx, int index,
                               char* out, int max_len);
 
+// Number of paralinguistic / emotion tags the model understands inline
+// in the text (e.g. "[laugh]", "[whispering]").
+int chatterbox_tag_count(const chatterbox_ctx_t* ctx);
+
+// Copy the i-th tag (brackets included) into `out`. Same contract as
+// chatterbox_voice_name.
+int chatterbox_tag_name(const chatterbox_ctx_t* ctx, int index,
+                           char* out, int max_len);
+
 // Set the active conditioning from a named voice in the pack.
 // Returns 0 on success, negative on error (e.g. voice not found).
 int chatterbox_set_voice(chatterbox_ctx_t* ctx, const char* voice_name);

@@ -38,6 +38,8 @@ single Docker image or a single Windows `.exe`.
 - **Web UI** (embedded, no build step) — text → speech with an audio player,
   download, light/dark theme, presets, and generation history.
 - **28 built-in voices** + **voice cloning** from an uploaded reference clip.
+- **Paralinguistic & emotion tags** — `[laugh]`, `[sigh]`, `[whispering]`,
+  `[angry]`, … written inline in the text (see [Tags](#paralinguistic--emotion-tags)).
 - **Per-request generation controls** — temperature, top-p, top-k, repetition
   penalty, CFM steps, seed.
 - **Output formats** — WAV / PCM always; MP3 + Opus with `--features audio-formats`.
@@ -156,7 +158,9 @@ GET  /                    -> embedded single-page UI
 
 # Rich API (used by the UI)
 GET  /api/voices          -> {"voices": ["Abigail", "Adrian", ...]}
-GET  /api/config          -> {"formats": [...], "voices": [...], "max_chunk_chars": N}
+GET  /api/config          -> {"formats": [...], "voices": [...], "max_chunk_chars": N,
+                              "tags": ["[angry]", ..., "[laugh]"]}
+GET  /api/tags            -> {"tags": ["[angry]", ..., "[laugh]"]}
 POST /api/clone           -> multipart WAV upload; clones the voice for
                              subsequent /api/tts calls (send voice:"")
 POST /api/tts             -> audio  {text, voice, seed?, format?,
@@ -177,6 +181,29 @@ POST /v1/audio/speech     -> WAV / raw PCM   {input, voice, response_format, see
 
 `GET /api/config` reports the formats the running build supports (the UI
 dropdown follows it).
+
+### Paralinguistic & emotion tags
+
+This port runs the **latest Chatterbox Turbo** checkpoint
+(`ResembleAI/chatterbox-turbo`), which was trained with 19 inline tags. Write
+them straight into the text, on any endpoint (including `/v1/audio/speech`):
+
+```
+Oh, that's priceless [laugh] okay, okay. [clear throat] Moving on.
+[whispering] Don't tell anyone, but [sarcastic] I just love Mondays.
+```
+
+| Kind | Tags |
+|---|---|
+| Sounds | `[laugh]` `[chuckle]` `[sigh]` `[gasp]` `[cough]` `[clear throat]` `[sniff]` `[groan]` `[shush]` |
+| Emotion / delivery | `[angry]` `[happy]` `[sarcastic]` `[surprised]` `[fear]` `[crying]` `[whispering]` `[dramatic]` `[narration]` `[advertisement]` |
+
+- In the web UI, click a tag chip under the text box to insert it at the cursor.
+- Matching is forgiving: `[Laugh]`, `[ sigh ]` and `[clear_throat]` all work.
+  Unknown tags (e.g. `[lol]`) are not special and are read out as text.
+- Tags steer the model rather than guarantee an effect; results vary by
+  voice and seed.
+- `GET /api/tags` returns the exact list the loaded model supports.
 
 ## Build & run from source (developers)
 

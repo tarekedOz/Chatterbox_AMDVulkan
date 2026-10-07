@@ -249,5 +249,33 @@ int main(int argc, char** argv) {
     }
 
     std::printf("\n%zu/%zu cases passed\n", passed, cases.size());
-    return passed == cases.size() ? 0 : 1;
+
+    // Lenient tag matching (beyond upstream): sloppy spellings of a tag
+    // must encode exactly like the canonical one; unknown tags must not.
+    const auto tags = tok->added_tokens();
+    struct Lenient { const char* sloppy; const char* canonical; bool same; };
+    const Lenient lenient[] = {
+        {"[Laugh] That was good.",       "[laugh] That was good.",       true},
+        {"[LAUGH] That was good.",       "[laugh] That was good.",       true},
+        {"Well [ sigh ] fine.",          "Well [sigh] fine.",            true},
+        {"Ahem [Clear_Throat] okay.",    "Ahem [clear throat] okay.",    true},
+        {"Ahem [clear-throat] okay.",    "Ahem [clear throat] okay.",    true},
+        {"Ahem [clear   throat] okay.",  "Ahem [clear throat] okay.",    true},
+        {"Ha [lol] okay.",               "Ha [laugh] okay.",             false},
+    };
+    size_t lpassed = 0;
+    for (const auto& l : lenient) {
+        const bool same = tok->encode(l.sloppy) == tok->encode(l.canonical);
+        const bool ok = same == l.same;
+        std::printf("[%s] lenient  %s\n", ok ? "PASS" : "FAIL", l.sloppy);
+        if (ok) ++lpassed;
+    }
+    const size_t n_lenient = sizeof(lenient) / sizeof(lenient[0]);
+    const bool tags_ok = tags.size() == 19 && tags.front() == "[angry]"
+                         && tags.back() == "[laugh]";
+    std::printf("[%s] added_tokens(): %zu tags\n",
+                tags_ok ? "PASS" : "FAIL", tags.size());
+    std::printf("%zu/%zu lenient cases passed\n", lpassed, n_lenient);
+
+    return (passed == cases.size() && lpassed == n_lenient && tags_ok) ? 0 : 1;
 }

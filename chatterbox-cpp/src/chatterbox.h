@@ -138,6 +138,10 @@ public:
     const ChatterboxConfig& config() const { return cfg_; }
     int  output_sample_rate() const { return cfg_.ref_sr_24k; }
 
+    // Paralinguistic / emotion tags the model understands inline in the
+    // text (e.g. "[laugh]", "[whispering]"), in vocab id order.
+    std::vector<std::string> tags() const;
+
 private:
     Chatterbox() = default;
 
