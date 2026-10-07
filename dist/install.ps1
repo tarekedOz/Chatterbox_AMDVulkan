@@ -3,7 +3,7 @@
   One-call installer for Chatterbox TTS (Windows x64).
 
   Typical use (public release, anonymous):
-      irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v1/install.ps1 | iex
+      irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v1.1/install.ps1 | iex
 
   Advanced / testing (override host, private host needs a token):
       .\install.ps1 -BaseUrl <release-or-registry-url> [-Token <pat>] `
@@ -25,7 +25,7 @@ param(
   [string]$BaseUrl,
   # Release tag the app package (install.ps1 + zip) is pulled from. Defaults
   # to this installer's version; pass e.g. -Tag v2 to upgrade.
-  [string]$Tag = 'v1',
+  [string]$Tag = 'v1.1',
   [string]$Token,
   [string]$InstallDir = (Join-Path $env:LOCALAPPDATA 'Chatterbox TTS'),
   [string]$Package = 'chatterbox-tts-win-x64.zip',

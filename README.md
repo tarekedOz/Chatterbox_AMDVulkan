@@ -82,7 +82,7 @@ bundled.
 weights, adds a Start Menu shortcut, and opens the UI:
 
 ```powershell
-irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v1/install.ps1 | iex
+irm https://github.com/tarekedOz/Chatterbox_AMDVulkan/releases/download/v1.1/install.ps1 | iex
 ```
 
 **Or the GUI installer** — download `chatterbox-tts-setup.exe` from the release
